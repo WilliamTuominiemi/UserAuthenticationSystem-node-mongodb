@@ -89,12 +89,12 @@ MongoClient.connect(connectionString, { useUnifiedTopology: true })
                         if(bcrypt.compareSync(req.body.password, object.password)){
                             // Passwords match
                             itemsProcessed++
-                            console.log("password match: ", itemsProcessed, results.length+1)
+                            console.log("Password match: ", itemsProcessed, results.length+1)
                             res.redirect('/users/' + object._id)   
                         } else{
                             // Passwords don't match
                             itemsProcessed++
-                            console.log("password no match: ", itemsProcessed, results.length+1)
+                            console.log("Password don't match: ", itemsProcessed, results.length+1)
                             console.log(itemsProcessed, results.length+1)
                             if(itemsProcessed === results.length+1)
                             {
