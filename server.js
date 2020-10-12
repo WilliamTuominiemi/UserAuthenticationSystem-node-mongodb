@@ -52,7 +52,7 @@ MongoClient.connect(connectionString, { useUnifiedTopology: true })
             })
 
             /* Check if array has the email the user is trying to register. */
-            if(emails.includes(req.body.email) || users.includes(req.body.username))
+            if(emails.includes(req.body.email) || usernames.includes(req.body.username))
             {
                 console.log("email or username already registered")
                 res.redirect('/err/auth')
@@ -66,7 +66,7 @@ MongoClient.connect(connectionString, { useUnifiedTopology: true })
                     collection.insertOne(req.body)
                     .then(result => {
                         console.log(req.body)
-                        res.redirect('/err/auth')
+                        res.redirect('/')
                     })
                     .catch(error => console.error(error))
                   });
@@ -77,31 +77,43 @@ MongoClient.connect(connectionString, { useUnifiedTopology: true })
     // Login.
     app.post('/login', (req, res) => {
         console.log("logging in")
+        let itemsProcessed = 1; // Variable to check if all users have been checked
         db.collection('users').find().toArray()            
         .then(results => {
-            results.forEach(object => {
+            results.forEach(object => {    
                 /* Check if any authentication info in database match the authentication info input of user. */
                 /* .trim() function removes all whitespace. */
-                if(object.username.trim() === req.body.username.trim())
-                {
-                    /* Use bcrypt to compare the two */
-                    bcrypt.compare(req.body.password, object.password, (err, result) => {
-                        if(result) {
-                        // Passwords match
-                         console.log("logged in")
-                         let userDomain = '/users/' + object._id
-                         res.redirect(userDomain)
-                        } else {
+                if(object.username.trim() === req.body.username.trim()) {
+                        /* Use bcrypt to compare the two */
+                        console.log(bcrypt.compareSync(req.body.password, object.password))
+                        if(bcrypt.compareSync(req.body.password, object.password)){
+                            // Passwords match
+                            itemsProcessed++
+                            console.log("password match: ", itemsProcessed, results.length+1)
+                            res.redirect('/users/' + object._id)   
+                        } else{
                             // Passwords don't match
-                            res.redirect('/err/auth')                         
-                        } 
-                      }) 
-                }
-                else {
-                    console.log("login failed");
-                    res.redirect('/err/auth') 
-                }
-            })
+                            itemsProcessed++
+                            console.log("password no match: ", itemsProcessed, results.length+1)
+                            console.log(itemsProcessed, results.length+1)
+                            if(itemsProcessed === results.length+1)
+                            {
+                                console.log("Passwords don't match")
+                                res.redirect('/err/auth')
+                            }
+                        }
+                }  
+                else{
+                    // User not found
+                    itemsProcessed++
+                    console.log(itemsProcessed, results.length) 
+                    if(itemsProcessed === results.length+1)
+                    {
+                        console.log("User not found")
+                        res.redirect('/err/auth')
+                    }
+                }      
+            })          
         })  .catch(error => console.error(error))
     })
 
